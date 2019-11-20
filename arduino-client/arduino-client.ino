@@ -3,21 +3,51 @@
 #include <ArduinoHttpClient.h>
 
 byte mac[] = {0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED};
+bool serialPrintingEnabled = true;
 
 EthernetClient ethClient;
 
+
+void logMessage(String message, int level = 1) {
+  
+  if (serialPrintingEnabled && Serial) {
+    String levelString = "DEBUG";
+    
+    if (level == 1) {
+      levelString = "INFO";
+    } else if (level == 2) {
+      levelString = "WARN";
+    } else if (level >= 3) {
+      levelString = "ERROR";
+    }
+    
+    Serial.println("[" + levelString + "]: " + message);
+  }
+  
+}
+
+void hang(String message) {
+  logMessage("Program Hanged: " + message, 2);
+  while(true);
+}
+
+HttpClient makeRequest(String body) {  
+  HttpClient httpClient = HttpClient(ethClient, "webhook.site", 80);
+  httpClient.post("/73eb4add-bdae-4a53-a4fe-4de78cd19b1f", "application/json", body);
+  return httpClient;
+}
+
 void setup()
-{
-  // hang("Perae!");
-  
-  Serial.begin(9600);
-  while (!Serial);
-  
-  pinMode(LED_BUILTIN, OUTPUT);
+{ 
+  if (serialPrintingEnabled) {
+    Serial.begin(9600);
+    while (!Serial);
+    logMessage("Serial initialized.");
+  }
     
   Ethernet.begin(mac);
   
-  Serial.println("Waiting for ethernet to init...");
+  logMessage("Waiting for ethernet to init...");
   delay(1000);
   
   if (Ethernet.hardwareStatus() == EthernetNoHardware) {
@@ -26,45 +56,38 @@ void setup()
 
   if (Ethernet.linkStatus() == LinkOFF) {
     hang("LOFF");
-  }  
+  }
 }
 
 void loop()
 {
-  Serial.println("Making POST request");
+  String body = "{\"balls\": \"wall\"}";
+  int attempt = 1;
+  int responseCode = 0;
   
-  HttpClient httpClient = HttpClient(ethClient, "webhook.site", 80);
-
   
-  String contentType = "application/x-www-form-urlencoded";
-  String postData = "name=Alice&age=12";
+  do {
+    
+    if (attempt > 10) {
+      logMessage("Stopping new attemtps after 10 unsuccesfull calls", 3);
+      break;
+    }
+    
+    if (attempt > 1) {
+      logMessage("Last request unsuccessfull. Status code: " + String(responseCode), 2);
+      logMessage("Starting attempt number " + String(attempt), 2);
+    }
+    
+    logMessage("Making POST request");
+    HttpClient response = makeRequest(body);
+    responseCode = response.responseStatusCode();
+    logMessage("status code: " + String(responseCode));
+    
+    attempt++;
+    
+  } while (responseCode != 200);
 
-  httpClient.post("/9fa843d5-d5d6-452e-949f-84874fac57b5", contentType, postData);
-
-  int statusCode = httpClient.responseStatusCode();
-  String response = httpClient.responseBody();
-
-  Serial.print("Status code: ");
-  Serial.println(statusCode);
-  
-  Serial.println();
-  Serial.println("Response: ");
-  Serial.println(response);
-
-//  Serial.println();
-//  Serial.println("Wait 10 seconds...");
-//  delay(10000);
-
-  Serial.println();
-}
-
-void hang(String message) {
-  if (Serial) {
-    Serial.println(message);
-  }
-
-  while(true) {
-    digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
-    delay(650);
-  }
+  attempt = 1;  
+  logMessage("Waiting 30s...");
+  delay(30000);
 }
