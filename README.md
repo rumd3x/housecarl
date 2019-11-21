@@ -1,3 +1,3 @@
-# home-automation
+# housecarl
 
-My automation project for my house.
+My home automation project.
