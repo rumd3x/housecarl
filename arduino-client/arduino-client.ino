@@ -6,23 +6,19 @@
 EthernetClient ethClient;
 byte mac[] = {0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED};
 
-/*
- *
- * Logging Level Cheatsheet
- *
- * 0 = DEBUG
- * 1 = INFO
- * 2 = WARN
- * 3 = ERROR
- *
- */
+#define LEVEL_DEBUG 0
+#define LEVEL_INFO 1
+#define LEVEL_WARN 2
+#define LEVEL_ERROR 3
 
-bool serialPrintingEnabled = true;
-int loggingLevel = 0;
+#define loggingLevel LEVEL_DEBUG
+#define serialPrintingEnabled true
 
-const int LM35 = A0;
+#define LM35 A0
+#define LDR 8
+#define PIR 9
 
-void logMessage(String message, int level = 1)
+void logMessage(String message, int level = LEVEL_INFO)
 {
 
   if (level < loggingLevel || !serialPrintingEnabled || !Serial)
@@ -32,15 +28,15 @@ void logMessage(String message, int level = 1)
 
   String levelString = "DEBUG";
 
-  if (level == 1)
+  if (level == LEVEL_INFO)
   {
     levelString = "INFO";
   }
-  else if (level == 2)
+  else if (level == LEVEL_WARN)
   {
     levelString = "WARN";
   }
-  else if (level >= 3)
+  else if (level >= LEVEL_ERROR)
   {
     levelString = "ERROR";
   }
@@ -50,15 +46,14 @@ void logMessage(String message, int level = 1)
 
 void hang(String message)
 {
-  logMessage("Program Hanged: " + message, 2);
-  while (true)
-    ;
+  logMessage("Program Hanged: " + message, LEVEL_WARN);
+  while (true);
 }
 
 int makeRequest(String body)
 {
-  logMessage("Request payload:", 0);
-  logMessage(body, 0);
+  logMessage("Request payload:", LEVEL_DEBUG);
+  logMessage(body, LEVEL_DEBUG);
 
   HttpClient httpClient = HttpClient(ethClient, "webhook.site", 80);
   httpClient.post("/73eb4add-bdae-4a53-a4fe-4de78cd19b1f", "application/json", body);
@@ -95,14 +90,14 @@ float readTemperature()
 {
   float temperature = 0;
 
-  for (int i = 0; i < 10; i++)
+  for (int i = 0; i < 100; i++)
   {
     temperature += readLM35();
     delay(5);
   }
 
-  temperature = temperature / 10.0;
-  logMessage("End Temp = " + String(temperature) + "C", 0);
+  temperature = temperature / 100.0;
+  logMessage("End Temp = " + String(temperature) + "C", LEVEL_DEBUG);
 
   return temperature;
 }
@@ -111,7 +106,11 @@ JSONVar readSensors()
 {
   JSONVar values;
 
+  logMessage("Starting sensor readings", LEVEL_DEBUG);
+  
   values["room_temperature"] = readTemperature();
+  values["room_luminosity"] = digitalRead(LDR) == LOW;
+  values["room_movement"] = digitalRead(PIR) == HIGH;
 
   return values;
 }
@@ -121,18 +120,19 @@ void (*resetBoard)(void) = 0;
 void setup()
 {
   pinMode(LM35, INPUT);
+  pinMode(LDR, INPUT);
+  pinMode(PIR, INPUT);
 
   if (serialPrintingEnabled)
   {
     Serial.begin(9600);
-    while (!Serial)
-      ;
-    logMessage("Serial initialized.", 0);
+    while (!Serial);
+    logMessage("Serial ok", LEVEL_DEBUG);
   }
 
   Ethernet.begin(mac);
 
-  logMessage("Waiting for ethernet to init...", 0);
+  logMessage("Waiting for ethernet to init", LEVEL_DEBUG);
   delay(1000);
 
   if (Ethernet.hardwareStatus() == EthernetNoHardware)
@@ -144,12 +144,15 @@ void setup()
   {
     hang("LOFF");
   }
+
+  logMessage("Setup succesfull!", LEVEL_DEBUG);
 }
 
 void loop()
 {
   int attempt = 1;
   int responseCode;
+
   JSONVar readings = readSensors();
 
   do
@@ -157,32 +160,32 @@ void loop()
 
     if (attempt > 10)
     {
-      logMessage("Stopping new attemtps after 10 unsuccesfull calls", 3);
+      logMessage("Stopping new attemtps after 10 unsuccesfull calls", LEVEL_ERROR);
       break;
     }
 
     if (attempt > 1)
     {
-      logMessage("Last request unsuccessful. Status code: " + String(responseCode), 2);
-      logMessage("Waiting a little before retrying...", 0);
+      logMessage("Last request unsuccessful. Status code: " + String(responseCode), LEVEL_WARN);
+      logMessage("Waiting a little before retrying...", LEVEL_DEBUG);
       delay(1000);
-      logMessage("Starting attempt number " + String(attempt), 2);
+      logMessage("Starting attempt number " + String(attempt), LEVEL_WARN);
     }
 
-    logMessage("Making POST request", 1);
+    logMessage("Making POST request", LEVEL_INFO);
     responseCode = makeRequest(JSON.stringify(readings));
-    logMessage("status code: " + String(responseCode), 1);
+    logMessage("status code: " + String(responseCode), LEVEL_INFO);
     attempt++;
 
   } while (responseCode != 200);
 
   if (responseCode < 0)
   {
-    logMessage("*** Resetting board ***", 2);
+    logMessage("*** Resetting board ***", LEVEL_WARN);
     resetBoard();
   }
 
   attempt = 1;
-  logMessage("Waiting...", 0);
-  delay(30000);
+  logMessage("Waiting...", LEVEL_DEBUG);
+  delay(5000);
 }
