@@ -1,8 +1,9 @@
-var createError = require('http-errors');
-var express = require('express');
 var path = require('path');
-var cookieParser = require('cookie-parser');
 var logger = require('morgan');
+var express = require('express');
+var favicon = require('serve-favicon');
+var createError = require('http-errors');
+var cookieParser = require('cookie-parser');
 var expressLayouts = require('express-ejs-layouts')
 
 
@@ -15,6 +16,7 @@ var app = express();
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
+// app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
 app.use(logger('dev'));
 app.use(express.json());
 app.use(expressLayouts);
