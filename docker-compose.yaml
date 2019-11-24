@@ -1,0 +1,22 @@
+version: "3"
+
+services:
+
+  manager:
+    build: ./manager
+    ports:
+      - 3000:3000
+    restart: unless-stopped
+    volumes:
+      - ./manager:/usr/src/app
+    depends_on:
+      - mongodb
+
+  mongodb:
+    image: mongo
+    restart: unless-stopped
+    ports:
+      - 27017:27017
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: root
+      ME_CONFIG_MONGODB_ADMINPASSWORD: example
