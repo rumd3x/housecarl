@@ -9,6 +9,7 @@ var expressLayouts = require('express-ejs-layouts')
 
 var apiRouter = require('./routes/api');
 var dashboardRouter = require('./routes/dashboard');
+var healthRouter = require('./routes/health');
 
 var app = express();
 
@@ -26,6 +27,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', dashboardRouter);
 app.use('/api', apiRouter);
+app.use('/health', healthRouter);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
@@ -37,6 +39,8 @@ app.use(function (err, req, res, next) {
   // set locals, only providing error in development
   res.locals.message = err.message;
   res.locals.error = req.app.get('env') === 'development' ? err : {};
+
+  console.error(err.stack);
 
   // render the error page
   res.status(err.status || 500);
