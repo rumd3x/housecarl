@@ -47,4 +47,11 @@ app.use(function (err, req, res, next) {
   res.render('error');
 });
 
+// var teste = async () => {
+//   console.log("teste");
+//   setTimeout(teste, 1000);
+// }
+
+// teste();
+
 module.exports = app;
