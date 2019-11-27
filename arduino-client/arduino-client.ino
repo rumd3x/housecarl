@@ -1,10 +1,14 @@
 #include <ArduinoHttpClient.h>
-#include <Arduino_JSON.h>
 #include <Ethernet.h>
 #include <SPI.h>
 
-EthernetClient ethClient;
 byte mac[] = {0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED};
+
+EthernetClient ethClient;
+HttpClient httpClient = HttpClient(ethClient, "192.168.1.62", 3000);
+
+const String loggerPath = "/api/logs";
+const String sensorStoragePath = "/api/sensors";
 
 #define LEVEL_DEBUG 0
 #define LEVEL_INFO 1
@@ -13,52 +17,83 @@ byte mac[] = {0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED};
 
 #define loggingLevel LEVEL_DEBUG
 #define serialPrintingEnabled true
+#define remoteLoggingEnabled true
 
 #define LM35 A0
 #define LDR 8
 #define PIR 9
 
-void logMessage(String message, int level = LEVEL_INFO)
+void (*resetBoard)(void) = 0;
+
+void printSerial(String message, int level)
 {
-
-  if (level < loggingLevel || !serialPrintingEnabled || !Serial)
-  {
-    return;
-  }
-
   String levelString = "DEBUG";
 
-  if (level == LEVEL_INFO)
-  {
+  if (level == LEVEL_INFO) {
     levelString = "INFO";
-  }
-  else if (level == LEVEL_WARN)
-  {
+  } else if (level == LEVEL_WARN) {
     levelString = "WARN";
-  }
-  else if (level >= LEVEL_ERROR)
-  {
+  } else if (level >= LEVEL_ERROR) {
     levelString = "ERROR";
   }
 
-  Serial.println("[" + levelString + "]: " + message);
+  Serial.println("[" + levelString + "]: " + message);  
+}
+
+void sendLogsToCloud(String message, int level)
+{
+  String logObject = "{";
+  logObject += "\"message\":\""  + String(message) + "\"";
+  logObject += ",\"level\":" + String(level);
+  logObject += "}";
+
+  makeRequest(logObject, loggerPath);
+}
+
+void logMessage(String message, int level = LEVEL_INFO)
+{
+
+  if (level < loggingLevel) {
+    return;
+  }
+
+  if (serialPrintingEnabled && Serial) {
+    printSerial(message, level);
+  }
+
+  if (remoteLoggingEnabled) {
+    sendLogsToCloud(message, level);
+  }
 }
 
 void hang(String message)
 {
-  logMessage("Program Hanged: " + message, LEVEL_WARN);
+  logMessage("f=hang;message=" + message, LEVEL_WARN);
   while (true);
 }
 
-int makeRequest(String body)
+int makeRequest(String body, String path)
 {
-  logMessage("Request payload:", LEVEL_DEBUG);
-  logMessage(body, LEVEL_DEBUG);
+  
+  httpClient.post(path, "application/json", body);
+  
+  int responseCode = httpClient.responseStatusCode();
+  httpClient.responseBody();
 
-  HttpClient httpClient = HttpClient(ethClient, "webhook.site", 80);
-  httpClient.post("/73eb4add-bdae-4a53-a4fe-4de78cd19b1f", "application/json", body);
+  if (responseCode < 0) {
+    resetBoard();
+  }
+  
+  return responseCode;
+}
 
-  return httpClient.responseStatusCode();
+bool sendSensorReadings(String readings)
+{  
+  logMessage("f=sendSensorReadings;message=Starting request", LEVEL_INFO);
+  int responseCode = makeRequest(readings, sensorStoragePath);
+  
+  logMessage("f=sendSensorReadings;responseCode=" + String(responseCode), LEVEL_INFO);
+  return responseCode == 200;
 }
 
 float readLM35()
@@ -97,25 +132,24 @@ float readTemperature()
   }
 
   temperature = temperature / 100.0;
-  logMessage("End Temp = " + String(temperature) + "C", LEVEL_DEBUG);
-
+  logMessage("f=readTemperature;temperature=" + String(temperature), LEVEL_DEBUG);
+    
   return temperature;
 }
 
-JSONVar readSensors()
-{
-  JSONVar values;
-
-  logMessage("Starting sensor readings", LEVEL_DEBUG);
+String readSensors()
+{  
   
-  values["room_temperature"] = readTemperature();
-  values["room_luminosity"] = digitalRead(LDR) == LOW;
-  values["room_movement"] = digitalRead(PIR) == HIGH;
-
-  return values;
+  logMessage("f=readSensors;message=Starting sensor readings", LEVEL_DEBUG);
+  
+  String encodedReadings = "{";
+  encodedReadings += "\"room_temperature\":" + String(readTemperature());
+  encodedReadings += ",\"room_luminosity\":" + String(digitalRead(LDR) == LOW);
+  encodedReadings += ",\"room_movement\":" + String(digitalRead(PIR) == HIGH);
+  encodedReadings += "}";
+  
+  return encodedReadings;
 }
-
-void (*resetBoard)(void) = 0;
 
 void setup()
 {
@@ -127,12 +161,9 @@ void setup()
   {
     Serial.begin(9600);
     while (!Serial);
-    logMessage("Serial ok", LEVEL_DEBUG);
   }
 
   Ethernet.begin(mac);
-
-  logMessage("Waiting for ethernet to init", LEVEL_DEBUG);
   delay(1000);
 
   if (Ethernet.hardwareStatus() == EthernetNoHardware)
@@ -145,47 +176,27 @@ void setup()
     hang("LOFF");
   }
 
-  logMessage("Setup succesfull!", LEVEL_DEBUG);
+  logMessage("f=setup;message=Setup ok;", LEVEL_DEBUG);
 }
 
 void loop()
 {
   int attempt = 1;
-  int responseCode;
+  String encodedReadings = readSensors();
+  bool sentReadingsSuccessfully = false;
 
-  JSONVar readings = readSensors();
+  int sleepMs = 11000;
 
-  do
-  {
-
-    if (attempt > 10)
-    {
-      logMessage("Stopping new attemtps after 10 unsuccesfull calls", LEVEL_ERROR);
-      break;
-    }
-
-    if (attempt > 1)
-    {
-      logMessage("Last request unsuccessful. Status code: " + String(responseCode), LEVEL_WARN);
-      logMessage("Waiting a little before retrying...", LEVEL_DEBUG);
-      delay(1000);
-      logMessage("Starting attempt number " + String(attempt), LEVEL_WARN);
-    }
-
-    logMessage("Making POST request", LEVEL_INFO);
-    responseCode = makeRequest(JSON.stringify(readings));
-    logMessage("status code: " + String(responseCode), LEVEL_INFO);
+  do {
+      
+    logMessage("f=loop;message=Attempt " + String(attempt), LEVEL_WARN);
+    sentReadingsSuccessfully = sendSensorReadings(encodedReadings);
+      
     attempt++;
-
-  } while (responseCode != 200);
-
-  if (responseCode < 0)
-  {
-    logMessage("*** Resetting board ***", LEVEL_WARN);
-    resetBoard();
-  }
-
-  attempt = 1;
-  logMessage("Waiting...", LEVEL_DEBUG);
-  delay(5000);
+    sleepMs -= 1000;
+    
+  } while (!sentReadingsSuccessfully && attempt <= 10);
+  
+  logMessage("f=loop;message=Waiting", LEVEL_DEBUG);
+  delay(sleepMs);
 }
