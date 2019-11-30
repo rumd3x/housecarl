@@ -1,4 +1,4 @@
-var mongo = require('../dao/readings');
+var mongo = require('../dao/mongo');
 
 var express = require('express');
 var router = express.Router();

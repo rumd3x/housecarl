@@ -11,12 +11,19 @@ mongoose.connect(connString);
 var sensorSchema = new mongoose.Schema({
     sensor: String,
     value: Object,
-}, { collection: "sensors" });
+}, { collection: "sensors" })
+
+var logSchema = new mongoose.Schema({
+    meta: [{ key: String, value: String }],
+    date: { type: Date, default: Date.now },
+    level: Number,
+}, { collection: "logs" })
 
 var sensors = mongoose.model('sensors', sensorSchema, 'sensors');
+var logs = mongoose.model('logs', logSchema, 'logs');
 
 var check = () => {
     return mongoose.connection.db.databaseName === 'housecarl-manager';
 };
 
-module.exports = { sensors, check };
+module.exports = { sensors, logs, check };
