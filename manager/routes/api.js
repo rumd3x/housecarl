@@ -5,58 +5,58 @@ var router = express.Router();
 
 router.get('/sensors', (req, res, next) => {
 
-  dao.logs.find({ 'meta.key': "f", 'meta.value': 'loop' }).lean().exec((e, docs) => {
-    res.send(docs).status(200);
-  });
+  dao.sensors.find({}).lean().exec((e, docs) => {
+    res.send(docs).status(200)
+  })
 
-});
+})
+
+router.get('/logs', (req, res, next) => {
+
+  dao.logs.find({ 'level': { $gte: 2 } }).sort({ date: 'desc' }).lean().exec((e, docs) => {
+    res.send(docs).status(200)
+  })
+
+})
 
 router.post('/sensors', (req, res) => {
 
-  // console.log("req.body", req.body);
+  if (typeof req.body !== 'object' || Object.entries(req.body).length === 0) {
+    res.sendStatus(400)
+    return
+  }
 
-  // if (typeof req.body !== 'object' || Object.entries(req.body).length === 0) {
+  Object.keys(req.body).forEach((key) => {
 
-  //   res.sendStatus(400);
-  //   return;
-  // }
+    dao.sensors.findOne({ sensor: key }, (err, reading) => {
 
-  // Object.keys(req.body).forEach((key) => {
+      if (err) console.error(err)
 
-  //   dao.sensors.findOne({ sensor: key }, (err, doc) => {
-  //     let value = req.body[key];
+      if (reading) {
 
-  //     if (err) {
-  //       res.sendStatus(500);
-  //       return;
-  //     }
+        reading.update({ value: req.body[key] }, (err) => {
+          if (err) console.error(err)
+        })
 
-  //     if (doc) {
-  //       doc.update({ value: value });
-  //       return;
-  //     }
-  //   });
+      } else {
 
-  // let input = new dao.sensors({ sensor: key, value: value });
-  // input.save((err) => {
-  //   if (err) {
-  //     console.error(`Failed to set ${key} to ${value}`, err);
-  //     res.sendStatus(500);
-  //     return;
-  //   }
+        let input = new dao.sensors({ sensor: key, value: req.body[key] })
+        input.save((err) => {
+          if (err) console.error(err)
+        })
 
-  //   console.info(`Succesfully set ${key} to ${value}`);
-  //   res.sendStatus(201);
-  // });
+      }
 
-  console.log("chegou aki");
-  res.sendStatus(200);
+    })
+  })
 
-});
+  res.sendStatus(200)
+})
 
 router.post("/logs", (req, res) => {
 
   let message = req.body["message"];
+  let level = req.body["level"];
   let meta = [];
 
   message.split(";").forEach((m) => {
@@ -68,7 +68,7 @@ router.post("/logs", (req, res) => {
       }
 
       if (key % 2 == 1) {
-        meta.push({ key: indexKey, value: value })
+        meta.push({ key: indexKey, value: value, level: level })
       }
 
     })
