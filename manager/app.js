@@ -11,6 +11,8 @@ var apiRouter = require('./routes/api');
 var dashboardRouter = require('./routes/dashboard');
 var healthRouter = require('./routes/health');
 
+var devices = require('./workers/devices');
+
 var app = express();
 
 // view engine setup
@@ -49,11 +51,27 @@ app.use(function (err, req, res, next) {
   res.render('error');
 });
 
-// var teste = async () => {
-//   console.log("teste");
-//   setTimeout(teste, 10000);
-// }
 
-// teste();
+
+var toggleLight = async () => {
+  try {
+    let toggledRoomLight = await devices.setDeviceState("Room", !await devices.getDeviceState('Room'))
+    console.log('toggledRoomLight', toggledRoomLight)
+  } catch (e) {
+    console.error(e)
+  }
+}
+
+var work = async () => {
+  toggleLight()
+
+  setTimeout(work, 10000)
+}
+
+// Start worker after a little while
+(() => {
+  console.log("Waiting before starting worker...")
+  setTimeout(work, 5000)
+})()
 
 module.exports = app;

@@ -7,6 +7,10 @@ services:
     ports:
       - 3000:3000
     restart: unless-stopped
+    environment:
+      MONGODB_IP: mongodb
+      EWELINK_EMAIL: myewelink@email.com
+      EWELINK_PASS: mypass123
     volumes:
       - ./manager:/usr/src/app
     depends_on:
