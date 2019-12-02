@@ -22,8 +22,59 @@ var logSchema = new mongoose.Schema({
 var sensors = mongoose.model('sensors', sensorSchema, 'sensors');
 var logs = mongoose.model('logs', logSchema, 'logs');
 
+var saveSensorReading = async (key, value) => {
+
+    sensors.findOne({ sensor: key }, (err, reading) => {
+
+        if (err) {
+            console.error(err)
+            return false
+        }
+
+        if (!reading) {
+            let reading = new dao.sensors({ sensor: key, value: value })
+
+            reading.save((err) => {
+                if (err) {
+                    console.error(err)
+                    return false
+                }
+
+                console.log(`Sensor ${key} was inserted for the first time with value ${value}`)
+                return true
+            })
+
+        } else {
+
+            reading.updateOne({ value: value }, (err) => {
+                if (err) {
+                    console.error(err)
+                    return false
+                }
+
+                console.log(`Sensor ${key} updated to ${value}`)
+                return true
+            })
+        }
+    })
+}
+
+var insertLogObject = async (logObject) => {
+    let log = new logs()
+
+    log.save((err) => {
+        if (err) {
+            console.error(`Failed to save log`, err)
+            return false
+        }
+
+        console.error(`Log inserted succesfully ${JSON.stringify(logObject)}`, err)
+        return true
+    })
+}
+
 var check = () => {
     return mongoose.connection.db.databaseName === 'housecarl-manager';
 };
 
-module.exports = { sensors, logs, check };
+module.exports = { sensors, logs, check, saveSensorReading, insertLogObject };
