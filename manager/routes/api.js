@@ -28,26 +28,8 @@ router.post('/sensors', (req, res) => {
 
   Object.keys(req.body).forEach((key) => {
 
-    dao.sensors.findOne({ sensor: key }, (err, reading) => {
+    dao.saveSensorReading(key, req.body[key]);
 
-      if (err) console.error(err)
-
-      if (reading) {
-
-        reading.update({ value: req.body[key] }, (err) => {
-          if (err) console.error(err)
-        })
-
-      } else {
-
-        let input = new dao.sensors({ sensor: key, value: req.body[key] })
-        input.save((err) => {
-          if (err) console.error(err)
-        })
-
-      }
-
-    })
   })
 
   res.sendStatus(200)
@@ -74,18 +56,10 @@ router.post("/logs", (req, res) => {
     })
   })
 
-  let log = new dao.logs({ meta: meta, level: req.body["level"] })
+  let logObject = { meta: meta, level: req.body["level"] }
+  dao.insertLogObject(logObject)
 
-  log.save((err) => {
-    if (err) {
-      console.error(`Failed to save log`, err)
-      res.sendStatus(500)
-      return
-    }
-
-    res.sendStatus(201)
-  })
-
+  res.sendStatus(201)
 })
 
 module.exports = router;
