@@ -1,4 +1,4 @@
-var ewelink = require('ewelink-api')
+const ewelink = require('ewelink-api')
 
 const connection = new ewelink({
     email: process.env.EWELINK_EMAIL,
@@ -6,8 +6,8 @@ const connection = new ewelink({
     region: 'us',
 });
 
-var searchDevice = async (deviceName) => {
-    let devices = await connection.getDevices()
+const searchDevice = async (deviceName) => {
+    const devices = await connection.getDevices()
 
     for (let i = 0; i < devices.length; i++) {
         if (devices[i].name.toUpperCase() === deviceName.toUpperCase()) {
@@ -20,9 +20,9 @@ var searchDevice = async (deviceName) => {
     return null
 }
 
-var getDeviceState = async (deviceName) => {
+const getDeviceState = async (deviceName) => {
 
-    let device = await searchDevice(deviceName)
+    const device = await searchDevice(deviceName)
 
     if (!device) {
         return null
@@ -33,9 +33,9 @@ var getDeviceState = async (deviceName) => {
     return (stateObject.state === 'on')
 };
 
-var setDeviceState = async (deviceName, newState) => {
+const setDeviceState = async (deviceName, newState) => {
 
-    let device = await searchDevice(deviceName)
+    const device = await searchDevice(deviceName)
     const newStateString = Boolean(newState) ? 'on' : 'off'
 
     if (!device) {
@@ -47,4 +47,15 @@ var setDeviceState = async (deviceName, newState) => {
     return (stateObject.status === 'ok' && stateObject.state === newStateString)
 }
 
-module.exports = { getDeviceState, setDeviceState };
+const check = () => {
+
+    return connection.getCredentials().then(
+        (auth) => {
+            return (auth.user.email === process.env.EWELINK_EMAIL)
+        }, () => {
+            return false
+        }
+    );
+}
+
+module.exports = { getDeviceState, setDeviceState, check };

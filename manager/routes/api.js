@@ -1,11 +1,11 @@
-var dao = require('../dao/mongo');
+var repository = require('../repository/mongo');
 
 var express = require('express');
 var router = express.Router();
 
 router.get('/sensors', (req, res, next) => {
 
-  dao.sensors.find({}).lean().exec((e, docs) => {
+  repository.sensors.find({}).lean().exec((e, docs) => {
     res.send(docs).status(200)
   })
 
@@ -13,7 +13,7 @@ router.get('/sensors', (req, res, next) => {
 
 router.get('/logs', (req, res, next) => {
 
-  dao.logs.find({ 'level': { $gte: 2 } }).sort({ date: 'desc' }).lean().exec((e, docs) => {
+  repository.logs.find({ 'level': { $gte: 2 } }).sort({ date: 'desc' }).lean().exec((e, docs) => {
     res.send(docs).status(200)
   })
 
@@ -28,7 +28,7 @@ router.post('/sensors', (req, res) => {
 
   Object.keys(req.body).forEach((key) => {
 
-    dao.saveSensorReading(key, req.body[key]);
+    repository.saveSensorReading(key, req.body[key]);
 
   })
 
@@ -57,7 +57,7 @@ router.post("/logs", (req, res) => {
   })
 
   let logObject = { meta: meta, level: req.body["level"] }
-  dao.insertLogObject(logObject)
+  repository.insertLogObject(logObject)
 
   res.sendStatus(201)
 })

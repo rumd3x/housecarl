@@ -1,12 +1,13 @@
-var mongo = require('../dao/mongo');
+const mongo = require('../repository/mongo')
+const ewelink = require('../repository/ewelink')
 
-var express = require('express');
-var router = express.Router();
+const express = require('express');
+const router = express.Router();
 
 /* GET users listing. */
 router.get('/', function (req, res, next) {
 
-    if (!mongo.check()) {
+    if (!mongo.check() || !ewelink.check()) {
         res.sendStatus(500);
         return;
     }
