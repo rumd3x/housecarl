@@ -1,7 +1,7 @@
-var repository = require('../repository/mongo');
+const repository = require('../repository/mongo')
 
-var express = require('express');
-var router = express.Router();
+const express = require('express')
+const router = express.Router()
 
 router.get('/sensors', (req, res, next) => {
 
@@ -28,7 +28,7 @@ router.post('/sensors', (req, res) => {
 
   Object.keys(req.body).forEach((key) => {
 
-    repository.saveSensorReading(key, req.body[key]);
+    repository.saveSensorReading(key, req.body[key])
 
   })
 
@@ -37,12 +37,12 @@ router.post('/sensors', (req, res) => {
 
 router.post("/logs", (req, res) => {
 
-  let message = req.body["message"];
-  let level = req.body["level"];
-  let meta = [];
+  let message = req.body["message"]
+  let level = req.body["level"]
+  let meta = []
 
   message.split(";").forEach((m) => {
-    let indexKey;
+    let indexKey
 
     m.split("=").forEach((value, key) => {
       if (key % 2 == 0) {
@@ -62,4 +62,4 @@ router.post("/logs", (req, res) => {
   res.sendStatus(201)
 })
 
-module.exports = router;
+module.exports = router

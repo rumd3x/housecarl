@@ -1,60 +1,55 @@
-var path = require('path');
-var logger = require('morgan');
-var express = require('express');
-var favicon = require('serve-favicon');
-var createError = require('http-errors');
-var cookieParser = require('cookie-parser');
-var expressLayouts = require('express-ejs-layouts')
+const path = require('path')
+const logger = require('morgan')
+const express = require('express')
+const favicon = require('serve-favicon')
+const createError = require('http-errors')
+const cookieParser = require('cookie-parser')
+const expressLayouts = require('express-ejs-layouts')
 
 
-var apiRouter = require('./routes/api');
-var dashboardRouter = require('./routes/dashboard');
-var healthRouter = require('./routes/health');
+const apiRouter = require('./routes/api')
+const dashboardRouter = require('./routes/dashboard')
+const healthRouter = require('./routes/health')
 
-var worker = require('./workers/worker');
+const worker = require('./workers/worker')
 
-var app = express();
+const app = express()
 
 // view engine setup
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'))
+app.set('view engine', 'ejs')
 
-// app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
-app.use(logger('dev'));
-app.use(express.json());
-app.use(expressLayouts);
-app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
+// app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')))
+app.use(logger('dev'))
+app.use(express.json())
+app.use(expressLayouts)
+app.use(express.urlencoded({ extended: false }))
+app.use(cookieParser())
+app.use(express.static(path.join(__dirname, 'public')))
 
-app.use('/', dashboardRouter);
-app.use('/api', apiRouter);
-app.use('/health', healthRouter);
+app.use('/', dashboardRouter)
+app.use('/api', apiRouter)
+app.use('/health', healthRouter)
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
-  next(createError(404));
-});
+  next(createError(404))
+})
 
 // error handler
 app.use(function (err, req, res, next) {
   // set locals, only providing error in development
-  res.locals.message = err.message;
-  res.locals.error = req.app.get('env') === 'development' ? err : {};
+  res.locals.message = err.message
+  res.locals.error = req.app.get('env') === 'development' ? err : {}
 
-  if (err.status !== 404) {
-    console.error(err.stack);
-  }
+  if (err.status !== 404) console.error(err.stack)
 
   // render the error page
-  res.status(err.status || 500);
-  res.render('error');
+  res.status(err.status || 500)
+  res.render('error')
 });
 
 // Start worker after a little while
-(() => {
-  console.log("Waiting before starting worker...")
-  setTimeout(worker.init, 5000)
-})()
+worker.init()
 
-module.exports = app;
+module.exports = app

@@ -4,14 +4,13 @@ const connection = new ewelink({
     email: process.env.EWELINK_EMAIL,
     password: process.env.EWELINK_PASS,
     region: 'us',
-});
+})
 
 const searchDevice = async (deviceName) => {
     const devices = await connection.getDevices()
 
     for (let i = 0; i < devices.length; i++) {
         if (devices[i].name.toUpperCase() === deviceName.toUpperCase()) {
-            console.log(`Device ${deviceName} found. ID=${devices[i].deviceid}`)
             return devices[i]
         }
     }
@@ -31,7 +30,7 @@ const getDeviceState = async (deviceName) => {
     let stateObject = await connection.getDevicePowerState(device.deviceid)
 
     return (stateObject.state === 'on')
-};
+}
 
 const setDeviceState = async (deviceName, newState) => {
 
@@ -55,7 +54,7 @@ const check = () => {
         }, () => {
             return false
         }
-    );
+    )
 }
 
-module.exports = { getDeviceState, setDeviceState, check };
+module.exports = { getDeviceState, setDeviceState, check }

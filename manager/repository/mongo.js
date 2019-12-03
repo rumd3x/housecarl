@@ -1,28 +1,28 @@
-var mongoose = require('mongoose');
+const mongoose = require('mongoose')
 
-const mongoIP = process.env.MONGODB_IP;
-const mongoPort = process.env.MONGODB_PORT;
+const mongoIP = process.env.MONGODB_IP
+const mongoPort = process.env.MONGODB_PORT
 
-const connString = `mongodb://${mongoIP ? mongoIP : '172.17.0.1'}:${mongoPort ? mongoPort : '27017'}/housecarl-manager`;
-console.log("connString", connString);
+const connString = `mongodb://${mongoIP ? mongoIP : '172.17.0.1'}:${mongoPort ? mongoPort : '27017'}/housecarl-manager`
+console.log("connString", connString)
 
-mongoose.connect(connString);
+mongoose.connect(connString)
 
-var sensorSchema = new mongoose.Schema({
+const sensorSchema = new mongoose.Schema({
     sensor: String,
     value: Object,
 }, { collection: "sensors" })
 
-var logSchema = new mongoose.Schema({
+const logSchema = new mongoose.Schema({
     meta: [{ key: String, value: String }],
     date: { type: Date, default: Date.now },
     level: Number,
 }, { collection: "logs" })
 
-var sensors = mongoose.model('sensors', sensorSchema, 'sensors');
-var logs = mongoose.model('logs', logSchema, 'logs');
+const sensors = mongoose.model('sensors', sensorSchema, 'sensors')
+const logs = mongoose.model('logs', logSchema, 'logs')
 
-var saveSensorReading = async (key, value) => {
+const saveSensorReading = async (key, value) => {
 
     sensors.findOne({ sensor: key }, (err, reading) => {
 
@@ -59,7 +59,19 @@ var saveSensorReading = async (key, value) => {
     })
 }
 
-var insertLogObject = async (logObject) => {
+const getSensorReading = async (sensor) => {
+    return await sensors.findOne({ sensor: sensor }).then(
+        (reading) => {
+            return reading.value
+        },
+        (err) => {
+            console.warn(`Sensor reading ${sensor} not found`)
+            return null
+        }
+    )
+}
+
+const insertLogObject = async (logObject) => {
     let log = new logs()
 
     log.save((err) => {
@@ -73,8 +85,8 @@ var insertLogObject = async (logObject) => {
     })
 }
 
-var check = () => {
-    return mongoose.connection.db.databaseName === 'housecarl-manager';
-};
+const check = () => {
+    return mongoose.connection.db.databaseName === 'housecarl-manager'
+}
 
-module.exports = { sensors, logs, check, saveSensorReading, insertLogObject };
+module.exports = { sensors, logs, check, saveSensorReading, insertLogObject, getSensorReading }
