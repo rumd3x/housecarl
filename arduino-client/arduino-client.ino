@@ -16,7 +16,7 @@ const String sensorStoragePath = "/api/sensors";
 #define LEVEL_ERROR 3
 
 #define loggingLevel LEVEL_DEBUG
-#define serialPrintingEnabled true
+#define serialPrintingEnabled false
 #define remoteLoggingEnabled true
 
 #define LM35 A0
@@ -185,7 +185,7 @@ void loop()
   String encodedReadings = readSensors();
   bool sentReadingsSuccessfully = false;
 
-  int sleepMs = 11000;
+  int sleepMs = 3000;
 
   do {
       
@@ -193,7 +193,7 @@ void loop()
     sentReadingsSuccessfully = sendSensorReadings(encodedReadings);
       
     attempt++;
-    sleepMs -= 1000;
+    sleepMs -= 200;
     
   } while (!sentReadingsSuccessfully && attempt <= 10);
   
