@@ -4,6 +4,7 @@ services:
 
   manager:
     build: ./manager
+    command: nodemon
     ports:
       - 3000:3000
     restart: unless-stopped
