@@ -46,11 +46,15 @@ const handleCeilingLamp = async () => {
         }
 
         if (!deskLamp && !roomLit && !roomLamp && roomMovement) {
+            console.log("Toggling Room light -> On")
             devices.setDeviceState("Room", true)
+            return
         }
 
         if (roomLamp && (!roomMovement || deskLamp)) {
+            console.log("Toggling Room light -> Off")
             devices.setDeviceState("Room", false)
+            return
         }
 
     } catch (e) {
@@ -68,7 +72,7 @@ const work = async () => {
     }).catch((e) => {
 
         devices.connect()
-        setTimeout(work, 5000)
+        setTimeout(work, 3500)
 
     })
 
