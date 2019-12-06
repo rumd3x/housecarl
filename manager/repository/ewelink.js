@@ -1,13 +1,25 @@
 const ewelink = require('ewelink-api')
 
+let requestsCount = 0;
+let errorsCount = 0;
+
 const connection = new ewelink({
     email: process.env.EWELINK_EMAIL,
     password: process.env.EWELINK_PASS,
     region: 'us',
 })
 
+const connect = () => {
+    connection.login().then(() => {
+        return true
+    }).catch(() => {
+        return false
+    })
+}
+
 const searchDevice = async (deviceName) => {
     const devices = await connection.getDevices()
+    requestsCount += 1
 
     for (let i = 0; i < devices.length; i++) {
         if (devices[i].name.toUpperCase() === deviceName.toUpperCase()) {
@@ -15,7 +27,8 @@ const searchDevice = async (deviceName) => {
         }
     }
 
-    console.error(`Device ${deviceName} not found`)
+    errorsCount += 1
+    console.error(`Device ${deviceName} not found. Error Rate = ${(errorsCount / requestsCount) * 100}%`)
     return null
 }
 
@@ -24,7 +37,7 @@ const getDeviceState = async (deviceName) => {
     const device = await searchDevice(deviceName)
 
     if (!device) {
-        return null
+        throw new Error(`Get Device State Failed: Device ${deviceName} not found`)
     }
 
     let stateObject = await connection.getDevicePowerState(device.deviceid)
@@ -38,7 +51,7 @@ const setDeviceState = async (deviceName, newState) => {
     const newStateString = Boolean(newState) ? 'on' : 'off'
 
     if (!device) {
-        return null
+        throw new Error(`Set Device State Failed: ${deviceName} not found`)
     }
 
     let stateObject = await connection.setDevicePowerState(device.deviceid, newStateString)
@@ -57,4 +70,4 @@ const check = () => {
     )
 }
 
-module.exports = { getDeviceState, setDeviceState, check }
+module.exports = { connect, getDeviceState, setDeviceState, check }
