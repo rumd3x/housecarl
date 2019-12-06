@@ -32,7 +32,7 @@ const saveSensorReading = async (key, value) => {
         }
 
         if (!reading) {
-            let reading = new dao.sensors({ sensor: key, value: value })
+            let reading = new sensors({ sensor: key, value: value })
 
             reading.save((err) => {
                 if (err) {
