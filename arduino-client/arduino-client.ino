@@ -5,7 +5,7 @@
 byte mac[] = {0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED};
 
 EthernetClient ethClient;
-HttpClient httpClient = HttpClient(ethClient, "192.168.1.62", 3000);
+HttpClient httpClient = HttpClient(ethClient, "192.168.1.3", 3000);
 
 const String loggerPath = "/api/logs";
 const String sensorStoragePath = "/api/sensors";
