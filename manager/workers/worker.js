@@ -109,7 +109,7 @@ const work = async () => {
         await handleCeilingLamp()
         await turnOffDevicesAtDawn()
 
-        setTimeout(work, 250)
+        setTimeout(work, 375)
 
     }).catch((e) => {
 
