@@ -47,8 +47,15 @@ const handleCeilingLamp = async () => {
 
     try {
 
-        const sunset = ((new Date()).getHours() >= 17 || (new Date()).getHours() <= 6)
+        const currentDate = new Date()
+        const sunset = (currentDate.getHours() >= 17 || currentDate.getHours() <= 6)
+        const isDueMin = (currentDate.getHours() > 6 || (currentDate.getHours() === 6 && currentDate.getMinutes() >= 45))
+        const isDueMax = (currentDate.getHours() <= 23 || (currentDate.getHours() === 0 && currentDate.getMinutes() >= 30))
+        const isDue = (isDueMin && isDueMax)
 
+        if (!isDue) {
+            return
+        }
 
         if (roomLit && !roomLamp) {
             return
