@@ -3,16 +3,20 @@ const sensors = require('../repository/mongo')
 
 let sunset
 let roomMovement
+let continuoslyMoving = false
 let roomLit
 let deskLamp
 let roomLamp
 let roomTV
 
 const updateStates = async () => {
+
     sunset = ((new Date()).getHours() >= 17 || (new Date()).getHours() <= 6)
 
     let roomMovementReading = sensors.getSensorReading("room_movement").then((state) => {
-        roomMovement = Boolean(state)
+        const newMovementState = Boolean(state)
+        continuoslyMoving = (roomMovement == newMovementState)
+        roomMovement = newMovementState
     })
 
     let roomLuminosityReading = sensors.getSensorReading("room_luminosity").then((state) => {
@@ -45,29 +49,30 @@ const handleCeilingLamp = async () => {
             return
         }
 
-        if (!deskLamp && !roomLit && !roomLamp && roomMovement) {
+        if (!deskLamp && !roomLit && !roomLamp && continuoslyMoving) {
             console.log("Toggling Room light -> On")
-            devices.setDeviceState("Room", true)
+            await devices.setDeviceState("Room", true)
             return
         }
 
         if (roomLamp && (!roomMovement || deskLamp)) {
             console.log("Toggling Room light -> Off")
-            devices.setDeviceState("Room", false)
+            await devices.setDeviceState("Room", false)
             return
         }
 
     } catch (e) {
         console.error(e)
+        throw new Error(e)
     }
 }
 
 const work = async () => {
 
-    updateStates().then(() => {
+    updateStates().then(async () => {
 
-        handleCeilingLamp()
-        work()
+        await handleCeilingLamp()
+        setTimeout(work, 250)
 
     }).catch((e) => {
 
