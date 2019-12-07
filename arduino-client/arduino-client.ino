@@ -185,7 +185,7 @@ void loop()
   String encodedReadings = readSensors();
   bool sentReadingsSuccessfully = false;
 
-  int sleepMs = 3000;
+  // int sleepMs = 3000;
 
   do {
       
@@ -193,10 +193,10 @@ void loop()
     sentReadingsSuccessfully = sendSensorReadings(encodedReadings);
       
     attempt++;
-    sleepMs -= 200;
+    // sleepMs -= 200;
     
   } while (!sentReadingsSuccessfully && attempt <= 10);
   
   logMessage("f=loop;message=Waiting", LEVEL_DEBUG);
-  delay(sleepMs);
+  // delay(sleepMs);
 }
