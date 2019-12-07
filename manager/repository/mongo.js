@@ -13,6 +13,11 @@ const sensorSchema = new mongoose.Schema({
     value: Object,
 }, { collection: "sensors" })
 
+const handlerSchema = new mongoose.Schema({
+    key: String,
+    data: Object,
+}, { collection: "handlers" })
+
 const logSchema = new mongoose.Schema({
     meta: [{ key: String, value: String }],
     date: { type: Date, default: Date.now },
@@ -21,6 +26,7 @@ const logSchema = new mongoose.Schema({
 
 const sensors = mongoose.model('sensors', sensorSchema, 'sensors')
 const logs = mongoose.model('logs', logSchema, 'logs')
+const handlers = mongoose.model('handlers', handlerSchema, 'handlers')
 
 const saveSensorReading = async (key, value) => {
 
@@ -71,6 +77,40 @@ const getSensorReading = async (sensor) => {
     )
 }
 
+const putHandlerData = async (key, data) => {
+    return await handlers.findOneAndUpdate({ key: key }, { data: data })
+        .lean()
+        .then((document) => {
+            if (document) return document
+
+            document = new handlers({ key: key, data: data })
+            document.save()
+                .then((document) => {
+                    return document
+                }).catch((e) => {
+                    console.error(e)
+                    throw new Error(e)
+                })
+        }).catch((e) => {
+            console.error(e)
+            throw new Error(e)
+        })
+
+}
+
+const getHandlerDataWithDefault = async (key, def) => {
+    return await handlers.findOne({ key: key })
+        .lean()
+        .then((document) => {
+            if (!document) return def
+
+            return document.data
+        }).catch((e) => {
+            console.warn(e)
+            return def
+        })
+}
+
 const insertLogObject = async (logObject) => {
     let log = new logs()
 
@@ -89,4 +129,4 @@ const check = () => {
     return mongoose.connection.db.databaseName === 'housecarl-manager'
 }
 
-module.exports = { sensors, logs, check, saveSensorReading, insertLogObject, getSensorReading }
+module.exports = { sensors, logs, putHandlerData, getHandlerDataWithDefault, check, saveSensorReading, insertLogObject, getSensorReading }
