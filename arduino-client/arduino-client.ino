@@ -15,7 +15,7 @@ const String sensorStoragePath = "/api/sensors";
 #define LEVEL_WARN 2
 #define LEVEL_ERROR 3
 
-#define loggingLevel LEVEL_DEBUG
+#define loggingLevel LEVEL_WARN
 #define serialPrintingEnabled false
 #define remoteLoggingEnabled true
 
