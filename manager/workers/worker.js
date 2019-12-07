@@ -49,6 +49,10 @@ const handleCeilingLamp = async () => {
             return
         }
 
+        if (!sunset && roomLamp) {
+            return
+        }
+
         if (!deskLamp && !roomLit && !roomLamp && continuoslyMoving) {
             console.log("Toggling Room light -> On")
             await devices.setDeviceState("Room", true)
