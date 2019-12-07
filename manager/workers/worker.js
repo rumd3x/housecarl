@@ -15,7 +15,7 @@ const updateStates = async () => {
 
     let roomMovementReading = sensors.getSensorReading("room_movement").then((state) => {
         const newMovementState = Boolean(state)
-        continuoslyMoving = (roomMovement == newMovementState)
+        continuoslyMoving = (newMovementState && roomMovement == newMovementState)
         roomMovement = newMovementState
     })
 
