@@ -61,10 +61,6 @@ const handleCeilingLamp = async () => {
             return
         }
 
-        if (!sunset && roomLamp) {
-            return
-        }
-
         if (sysLastSetRoomLampState != null && sysLastSetRoomLampState !== roomLamp) {
             console.log(`Room Light was toggled manually. Keeping Room Light -> ${roomLamp ? "On" : "Off"}`)
             return
