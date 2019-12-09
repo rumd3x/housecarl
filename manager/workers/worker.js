@@ -118,7 +118,7 @@ const work = async () => {
     }).catch((e) => {
 
         devices.reconnect()
-        setTimeout(work, 2000)
+        setTimeout(work, 5000)
 
     })
 
