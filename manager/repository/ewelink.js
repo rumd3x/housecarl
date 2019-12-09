@@ -40,7 +40,7 @@ const getDeviceState = async (deviceName) => {
 
     let stateObject = await connection.getDevicePowerState(device.deviceid)
 
-    if (device.status !== 'ok') {
+    if (stateObject.status !== 'ok') {
         throw new Error(`Device ${deviceName} is not available.`)
     }
 
@@ -58,7 +58,7 @@ const setDeviceState = async (deviceName, newState) => {
 
     let stateObject = await connection.setDevicePowerState(device.deviceid, newStateString)
 
-    if (device.status !== 'ok') {
+    if (stateObject.status !== 'ok') {
         throw new Error(`Device ${deviceName} is not available.`)
     }
 
