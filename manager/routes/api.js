@@ -1,11 +1,11 @@
-const repository = require('../repository/mongo')
+const db = require('../repository/mongo')
 
 const express = require('express')
 const router = express.Router()
 
 router.get('/sensors', (req, res, next) => {
 
-  repository.sensors.find({}).lean().exec((e, docs) => {
+  db.sensors.find({}).lean().exec((e, docs) => {
     res.send(docs).status(200)
   })
 
@@ -13,9 +13,21 @@ router.get('/sensors', (req, res, next) => {
 
 router.get('/logs', (req, res, next) => {
 
-  repository.logs.find({ 'level': { $gte: 2 } }).sort({ date: 'desc' }).lean().exec((e, docs) => {
+  db.logs.find({ 'level': { $gte: 2 } }).sort({ date: 'desc' }).lean().exec((e, docs) => {
     res.send(docs).status(200)
   })
+
+})
+
+router.get('/config/:config', (req, res) => {
+
+  const conf = req.param('config')
+
+  db.getHandlerDataWithDefault(conf, 'unset')
+    .then((val) => {
+      console.log('val', typeof val, val)
+      res.send(String(val)).status(200)
+    })
 
 })
 
@@ -28,7 +40,7 @@ router.post('/sensors', (req, res) => {
 
   Object.keys(req.body).forEach((key) => {
 
-    repository.saveSensorReading(key, req.body[key])
+    db.saveSensorReading(key, req.body[key])
 
   })
 
@@ -57,7 +69,7 @@ router.post("/logs", (req, res) => {
   })
 
   let logObject = { meta: meta, level: req.body["level"] }
-  repository.insertLogObject(logObject)
+  db.insertLogObject(logObject)
 
   res.sendStatus(201)
 })
