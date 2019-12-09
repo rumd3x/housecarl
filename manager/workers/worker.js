@@ -99,8 +99,10 @@ const turnOffDevicesAtDawn = async () => {
             await devices.setDeviceState("TV", false)
         }
 
-        console.log("Overriding manual Room Lamp control")
-        db.putHandlerData("sys_last_roomlamp_set_state", roomLamp)
+        if (isDue) {
+            console.log("Overriding manual Room Lamp control")
+            db.putHandlerData("sys_last_roomlamp_set_state", roomLamp)
+        }
 
     } catch (e) {
         console.error(e)
