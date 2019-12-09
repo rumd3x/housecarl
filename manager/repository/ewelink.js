@@ -1,34 +1,32 @@
 const ewelink = require('ewelink-api')
 
-let requestsCount = 0;
-let errorsCount = 0;
+let devicesCache = null
 
-const connection = new ewelink({
+let connection = new ewelink({
     email: process.env.EWELINK_EMAIL,
     password: process.env.EWELINK_PASS,
-    region: 'us',
 })
 
-const connect = () => {
-    connection.login().then(() => {
-        return true
-    }).catch(() => {
-        return false
-    })
+const reconnect = async () => {
+    await connection.getCredentials()
+    return check()
 }
 
 const searchDevice = async (deviceName) => {
-    const devices = await connection.getDevices()
-    requestsCount += 1
+    let devices = devicesCache
 
-    for (let i = 0; i < devices.length; i++) {
-        if (devices[i].name.toUpperCase() === deviceName.toUpperCase()) {
+    if (devicesCache === null) {
+        devicesCache = await connection.getDevices()
+    }
+
+    for (let i = 0; i < devicesCache.length; i++) {
+        if (devicesCache[i].name.toUpperCase() === deviceName.toUpperCase()) {
             return devices[i]
         }
     }
 
-    errorsCount += 1
-    console.error(`Device ${deviceName} not found. Error Rate = ${(errorsCount / requestsCount) * 100}%`)
+    devicesCache = null
+    console.error(`Device ${deviceName} not found.`)
     return null
 }
 
@@ -37,10 +35,14 @@ const getDeviceState = async (deviceName) => {
     const device = await searchDevice(deviceName)
 
     if (!device) {
-        throw new Error(`Get Device State Failed: Device ${deviceName} not found`)
+        throw new Error(`Get Device State Failed: Device ${deviceName} not found.`)
     }
 
     let stateObject = await connection.getDevicePowerState(device.deviceid)
+
+    if (device.status !== 'ok') {
+        throw new Error(`Device ${deviceName} is not available.`)
+    }
 
     return (stateObject.state === 'on')
 }
@@ -56,18 +58,15 @@ const setDeviceState = async (deviceName, newState) => {
 
     let stateObject = await connection.setDevicePowerState(device.deviceid, newStateString)
 
+    if (device.status !== 'ok') {
+        throw new Error(`Device ${deviceName} is not available.`)
+    }
+
     return (stateObject.status === 'ok' && stateObject.state === newStateString)
 }
 
 const check = () => {
-
-    return connection.getCredentials().then(
-        (auth) => {
-            return (auth.user.email === process.env.EWELINK_EMAIL)
-        }, () => {
-            return false
-        }
-    )
+    return (typeof connection.at === 'string' && connection.at !== '')
 }
 
-module.exports = { connect, getDeviceState, setDeviceState, check }
+module.exports = { reconnect, getDeviceState, setDeviceState, check }
