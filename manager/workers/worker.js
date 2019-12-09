@@ -90,7 +90,7 @@ const turnOffDevicesAtDawn = async () => {
 
     try {
         const currentDate = new Date()
-        const isDueHour = (currentDate.getHours() == 5)
+        const isDueHour = (currentDate.getHours() == 4)
         const isDueMinute = (currentDate.getMinutes() >= 30 && currentDate.getMinutes() <= 40)
         const isDue = (isDueHour && isDueMinute)
 
@@ -98,6 +98,9 @@ const turnOffDevicesAtDawn = async () => {
             console.log(`Turning OFF TV @ ${currentDate.getHours()}:${currentDate.getMinutes}:${currentDate.getSeconds()}`)
             await devices.setDeviceState("TV", false)
         }
+
+        console.log("Overriding manual Room Lamp control")
+        db.putHandlerData("sys_last_roomlamp_set_state", roomLamp)
 
     } catch (e) {
         console.error(e)
