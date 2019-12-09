@@ -25,7 +25,6 @@ router.get('/config/:config', (req, res) => {
 
   db.getHandlerDataWithDefault(conf, 'unset')
     .then((val) => {
-      console.log('val', typeof val, val)
       res.send(String(val)).status(200)
     })
 
