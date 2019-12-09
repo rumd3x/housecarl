@@ -95,6 +95,7 @@ const turnOffDevicesAtDawn = async () => {
         const isDue = (isDueHour && isDueMinute)
 
         if (isDue && roomTV) {
+            console.log(`Turning OFF TV @ ${currentDate.getHours()}:${currentDate.getMinutes}:${currentDate.getSeconds()}`)
             await devices.setDeviceState("TV", false)
         }
 
@@ -112,12 +113,12 @@ const work = async () => {
         await handleCeilingLamp()
         await turnOffDevicesAtDawn()
 
-        setTimeout(work, 375)
+        setTimeout(work, 250)
 
     }).catch((e) => {
 
-        devices.connect()
-        setTimeout(work, 3500)
+        devices.reconnect()
+        setTimeout(work, 2000)
 
     })
 
