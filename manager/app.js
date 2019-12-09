@@ -12,6 +12,7 @@ const dashboardRouter = require('./routes/dashboard')
 const healthRouter = require('./routes/health')
 
 const worker = require('./workers/worker')
+const db = require('./repository/mongo')
 
 const app = express()
 
@@ -48,6 +49,16 @@ app.use(function (err, req, res, next) {
   res.status(err.status || 500)
   res.render('error')
 });
+
+(() => {
+
+  try {
+    db.putHandlerData("LOGGING_LEVEL", 0)
+  } catch (e) {
+    console.error("Failed to set configurations on initialization")
+  }
+
+})()
 
 // Start worker after a little while
 worker.init()
