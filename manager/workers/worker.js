@@ -2,7 +2,6 @@ const devices = require('../repository/ewelink')
 const db = require('../repository/mongo')
 
 let roomMovement
-let continuoslyMoving = false
 let roomLit
 let deskLamp
 let roomLamp
@@ -12,8 +11,6 @@ let sysLastSetRoomLampState
 const updateStates = async () => {
 
     let roomMovementReading = db.getSensorReading("room_movement").then((state) => {
-        const newMovementState = Boolean(state)
-        continuoslyMoving = (roomMovement && newMovementState)
         roomMovement = newMovementState
     })
 
@@ -66,7 +63,7 @@ const handleCeilingLamp = async () => {
             return
         }
 
-        if (!deskLamp && !roomLit && !roomLamp && continuoslyMoving) {
+        if (!deskLamp && !roomLit && !roomLamp && roomMovement) {
             console.log("Toggling Room light -> On")
             db.putHandlerData("sys_last_roomlamp_set_state", true)
             await devices.setDeviceState("Room", true)
@@ -118,7 +115,7 @@ const work = async () => {
         await handleCeilingLamp()
         await turnOffDevicesAtDawn()
 
-        setTimeout(work, 250)
+        work()
 
     }).catch((e) => {
 
