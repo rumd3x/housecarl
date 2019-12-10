@@ -53,7 +53,7 @@ app.use(function (err, req, res, next) {
 (() => {
 
   try {
-    db.putHandlerData("LOGGING_LEVEL", 0)
+    db.putHandlerData("LOGGING_LEVEL", 2)
   } catch (e) {
     console.error("Failed to set configurations on initialization")
   }
