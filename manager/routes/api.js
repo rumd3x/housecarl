@@ -61,7 +61,7 @@ router.post("/logs", (req, res) => {
       }
 
       if (key % 2 == 1) {
-        meta.push({ key: indexKey, value: value, level: level })
+        meta.push({ key: indexKey, value: value })
       }
 
     })
