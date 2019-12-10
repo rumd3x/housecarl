@@ -11,7 +11,7 @@ let sysLastSetRoomLampState
 const updateStates = async () => {
 
     let roomMovementReading = db.getSensorReading("room_movement").then((state) => {
-        roomMovement = newMovementState
+        roomMovement = state
     })
 
     let roomLuminosityReading = db.getSensorReading("room_luminosity").then((state) => {
