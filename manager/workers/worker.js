@@ -108,6 +108,22 @@ const turnOffDevicesAtDawn = async () => {
 
 }
 
+const reconnectEWeLink = async () => {
+    let success = false
+
+    while (!success) {
+
+        try {
+            success = await devices.reconnect()
+        } catch (error) {
+            success = false
+        }
+
+    }
+
+    return success
+}
+
 const work = async () => {
 
     updateStates().then(async () => {
@@ -119,8 +135,9 @@ const work = async () => {
 
     }).catch((e) => {
 
-        devices.reconnect()
-        setTimeout(work, 5000)
+        reconnectEWeLink().finally(() => {
+            work()
+        })
 
     })
 
