@@ -46,24 +46,6 @@ void printSerial(String message, int level)
   Serial.println("[" + levelString + "]: " + message);
 }
 
-String getCloudSetting(String setting, String def)
-{
-
-  httpClient.get(configurationPath + setting);
-
-  if (httpClient.responseStatusCode() < 0) {
-    resetBoard();
-  }
-
-  String response = httpClient.responseBody();
-
-  if (response == "unset") {
-    return def;
-  }
-
-  return response;
-}
-
 int makeRequest(String body, String path)
 {
 
@@ -103,6 +85,25 @@ void logMessage(String message, int level)
   if (remoteLoggingEnabled) {
     sendLogsToCloud(message, level);
   }
+}
+
+String getCloudSetting(String setting, String def)
+{
+
+  httpClient.get(configurationPath + setting);
+
+  if (httpClient.responseStatusCode() < 0) {
+    resetBoard();
+  }
+
+  String response = httpClient.responseBody();
+
+  if (response == "unset") {
+    logMessage("f=getCloudSetting;message=unset;setting=" + String(response), LEVEL_WARN);
+    return def;
+  }
+
+  return response;
 }
 
 void hang(String message)
@@ -205,14 +206,14 @@ void setup()
     hang("LOFF");
   }
 
+  loggingLevel = getCloudSetting(loggingLevelSetting, String(LEVEL_INFO)).toInt();
+  logMessage("f=loop;message=Set logging level: " + String(loggingLevel), LEVEL_INFO);
+
   logMessage("f=setup;message=Setup ok;", LEVEL_DEBUG);
 }
 
 void loop()
 {  
-  loggingLevel = getCloudSetting(loggingLevelSetting, String(LEVEL_INFO)).toInt();
-  logMessage("f=loop;message=Set logging level: " + String(loggingLevel), LEVEL_DEBUG);
-  
   int attempt = 1;
   String encodedReadings = readSensors();
   bool sentReadingsSuccessfully = false;
