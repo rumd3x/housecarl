@@ -1,7 +1,6 @@
 const path = require('path')
 const logger = require('morgan')
 const express = require('express')
-const var_dump = require('var_dump')
 const favicon = require('serve-favicon')
 const createError = require('http-errors')
 const cookieParser = require('cookie-parser')
@@ -38,8 +37,6 @@ app.use(function (err, req, res, next) {
   // set locals, only providing error in development
   err.status = err.status || 500
   res.locals.error = err
-
-  var_dump(err)
 
   // render the error page
   res.status(err.statusCode || 500)
