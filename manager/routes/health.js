@@ -1,4 +1,3 @@
-const mongo = require('../repository/mongo')
 const ewelink = require('../repository/ewelink')
 
 const express = require('express')
@@ -7,7 +6,7 @@ const router = express.Router()
 /* GET users listing. */
 router.get('/', function (req, res, next) {
 
-    if (!mongo.check() || !ewelink.check()) {
+    if (!ewelink.check()) {
         res.sendStatus(500)
         return
     }

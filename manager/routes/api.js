@@ -1,76 +1,61 @@
-const db = require('../repository/mongo')
-
 const express = require('express')
+const ewelink = require('../repository/ewelink')
+
 const router = express.Router()
 
-router.get('/sensors', (req, res, next) => {
+const mesaDevice = "Mesa"
+const quartoDevice = "Quarto"
 
-  db.sensors.find({}).lean().exec((e, docs) => {
-    res.send(docs).status(200)
-  })
+router.post('/lights/smart-toggle', (req, res, next) => {
 
-})
+  const input = req.body["secret"]
+  const secret = process.env["SECRET_KEY"]
 
-router.get('/logs', (req, res, next) => {
-
-  db.logs.find({ 'level': { $gte: 2 } }).sort({ date: 'desc' }).lean().exec((e, docs) => {
-    res.send(docs).status(200)
-  })
-
-})
-
-router.get('/config/:config', (req, res) => {
-
-  const conf = req.param('config')
-
-  db.getHandlerDataWithDefault(conf, 'unset')
-    .then((val) => {
-      res.send(String(val)).status(200)
-    })
-
-})
-
-router.post('/sensors', (req, res) => {
-
-  if (typeof req.body !== 'object' || Object.entries(req.body).length === 0) {
+  if (typeof input == "undefined") {
     res.sendStatus(400)
     return
   }
 
-  Object.keys(req.body).forEach((key) => {
+  if (secret && input != secret) {
+    res.sendStatus(401)
+    return
+  }
 
-    db.saveSensorReading(key, req.body[key])
+  const deviceStates = [
+    ewelink.getDeviceState(quartoDevice),
+    ewelink.getDeviceState(mesaDevice),
+  ]
 
+  Promise.all(deviceStates).then(data => {
+    if (data.length < 2) {
+      return
+    }
+
+    const quartoState = data[0]
+    const mesaState = data[1]
+
+    if (quartoState && mesaState) {
+      ewelink.setDeviceState(mesaDevice, false)
+      ewelink.setDeviceState(quartoDevice, false)
+      return
+    }
+
+    if (mesaState && !quartoState) {
+      ewelink.setDeviceState(mesaDevice, false)
+      ewelink.setDeviceState(quartoDevice, true)
+      return
+    }
+
+    if (quartoState) {
+      ewelink.setDeviceState(mesaDevice, false)
+      ewelink.setDeviceState(quartoDevice, false)
+      return
+    }
+
+    ewelink.setDeviceState(mesaDevice, true)
   })
 
   res.sendStatus(200)
-})
-
-router.post("/logs", (req, res) => {
-
-  let message = req.body["message"]
-  let level = req.body["level"]
-  let meta = []
-
-  message.split(";").forEach((m) => {
-    let indexKey
-
-    m.split("=").forEach((value, key) => {
-      if (key % 2 == 0) {
-        indexKey = value
-      }
-
-      if (key % 2 == 1) {
-        meta.push({ key: indexKey, value: value })
-      }
-
-    })
-  })
-
-  let logObject = { meta: meta, level: req.body["level"] }
-  db.insertLogObject(logObject)
-
-  res.sendStatus(201)
 })
 
 module.exports = router

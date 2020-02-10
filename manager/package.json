@@ -17,5 +17,8 @@
     "mongoose": "^5.7.12",
     "morgan": "~1.9.1",
     "serve-favicon": "^2.5.0"
+  },
+  "devDependencies": {
+    "var_dump": "^1.0.5"
   }
 }

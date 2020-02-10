@@ -1,6 +1,7 @@
 const path = require('path')
 const logger = require('morgan')
 const express = require('express')
+const var_dump = require('var_dump')
 const favicon = require('serve-favicon')
 const createError = require('http-errors')
 const cookieParser = require('cookie-parser')
@@ -8,11 +9,7 @@ const expressLayouts = require('express-ejs-layouts')
 
 
 const apiRouter = require('./routes/api')
-const dashboardRouter = require('./routes/dashboard')
 const healthRouter = require('./routes/health')
-
-const worker = require('./workers/worker')
-const db = require('./repository/mongo')
 
 const app = express()
 
@@ -28,7 +25,6 @@ app.use(express.urlencoded({ extended: false }))
 app.use(cookieParser())
 app.use(express.static(path.join(__dirname, 'public')))
 
-app.use('/', dashboardRouter)
 app.use('/api', apiRouter)
 app.use('/health', healthRouter)
 
@@ -40,27 +36,15 @@ app.use(function (req, res, next) {
 // error handler
 app.use(function (err, req, res, next) {
   // set locals, only providing error in development
-  res.locals.message = err.message
-  res.locals.error = req.app.get('env') === 'development' ? err : {}
+  err.status = err.status || 500
+  res.locals.error = err
 
-  if (err.status !== 404) console.error(err.stack)
+  var_dump(err)
 
   // render the error page
-  res.status(err.status || 500)
+  res.status(err.statusCode || 500)
   res.render('error')
 });
 
-(() => {
-
-  try {
-    db.putHandlerData("LOGGING_LEVEL", 2)
-  } catch (e) {
-    console.error("Failed to set configurations on initialization")
-  }
-
-})()
-
-// Start worker after a little while
-worker.init()
 
 module.exports = app

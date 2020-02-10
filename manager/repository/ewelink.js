@@ -16,6 +16,7 @@ const searchDevice = async (deviceName) => {
     let devices = devicesCache
 
     if (devicesCache === null) {
+        console.info("Buffering devices cache...")
         devicesCache = await connection.getDevices()
     }
 
@@ -44,6 +45,7 @@ const getDeviceState = async (deviceName) => {
         throw new Error(`Device ${deviceName} is not available.`)
     }
 
+    console.info(`Device ${deviceName} state is: ${stateObject.state}`)
     return (stateObject.state === 'on')
 }
 
@@ -56,6 +58,7 @@ const setDeviceState = async (deviceName, newState) => {
         throw new Error(`Set Device State Failed: ${deviceName} not found`)
     }
 
+    console.info(`Setting device ${deviceName} state to: ${newStateString}`)
     let stateObject = await connection.setDevicePowerState(device.deviceid, newStateString)
 
     if (stateObject.status !== 'ok') {
