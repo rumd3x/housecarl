@@ -1,2 +1,4 @@
 manager/public/* linguist-vendored
 manager/views/* linguist-vendored
+manager-old/public/* linguist-vendored
+manager-old/views/* linguist-vendored
